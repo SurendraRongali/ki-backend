@@ -3,6 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertArticleSchema, insertCategorySchema, insertNewsletterSchema } from "./shared/schema";
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Stripe will be initialized when keys are provided
 let stripe: any = null;

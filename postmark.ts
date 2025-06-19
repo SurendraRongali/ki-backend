@@ -1,4 +1,6 @@
 import * as postmark from 'postmark';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Initialize Postmark client - enterprise email service used by Stripe, GitHub, and major fintech
 let client: postmark.ServerClient | null = null;

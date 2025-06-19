@@ -1,6 +1,8 @@
 import NodeCache from 'node-cache';
 import { Request, Response, NextFunction } from 'express';
 import { storage } from './storage';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Enhanced cache instances with comprehensive configuration for production
 const shortCache = new NodeCache({ 

@@ -7,6 +7,8 @@ import {
   generateArticlePurchaseEmail,
   generateContactFormAutoResponse 
 } from './email-templates';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Initialize Resend - only if API key is provided
 // Import Resend using CommonJS require to avoid ES module issues

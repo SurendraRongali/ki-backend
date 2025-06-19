@@ -1,4 +1,6 @@
 import { MailService } from '@sendgrid/mail';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Make SendGrid optional - only initialize if API key is provided
 let mailService: MailService | null = null;

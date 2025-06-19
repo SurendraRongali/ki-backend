@@ -1,6 +1,8 @@
 import AWS from 'aws-sdk';
 import multer from 'multer';
 import path from 'path';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // AWS S3 Configuration
 const s3 = new AWS.S3({

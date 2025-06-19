@@ -1,6 +1,8 @@
 import { randomBytes } from "crypto";
 import { storage } from "./storage";
 import { sendEmail as sendEmailResend } from "./resend";
+import dotenv from 'dotenv';
+dotenv.config();
 
 interface MagicLinkToken {
   token: string;

@@ -1,4 +1,6 @@
 import twilio from 'twilio';
+import dotenv from 'dotenv';
+dotenv.config();
 
 interface SMSConfig {
   accountSid: string;

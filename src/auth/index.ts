@@ -6,6 +6,8 @@ import bcrypt from 'bcrypt';
 import { eq } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../schema/index.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 export function setupAuthRoutes(app: Express, db: NodePgDatabase<typeof schema>) {
   // Initialize Passport

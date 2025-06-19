@@ -7,6 +7,8 @@ import rateLimit from 'express-rate-limit';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Production-compatible directory resolution
 const __filename = fileURLToPath(import.meta.url);

@@ -2,6 +2,8 @@
  * AWS Migration Preparation
  * Optimizes application for seamless AWS deployment
  */
+import dotenv from 'dotenv';
+dotenv.config();
 
 export class AWSMigrationOptimizer {
   // Environment variable validation for AWS deployment

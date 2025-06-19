@@ -1,6 +1,8 @@
 import AWS from 'aws-sdk';
 import { promises as fs } from 'fs';
 import path from 'path';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Configure AWS SES for enterprise email delivery
 const ses = new AWS.SES({

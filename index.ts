@@ -6,12 +6,15 @@ import compression from "compression";
 import path from "path";
 import fs from "fs";
 import { registerRoutes } from "./routes";
+import { testDatabaseConnection } from "./db";
 // Simple logging function
 const log = (message: string) => {
   const timestamp = new Date().toLocaleTimeString();
   console.log(`${timestamp} [express] ${message}`);
 };
 import { initializeCache, cacheMetrics, cacheWarming } from "./cache";
+import dotenv from 'dotenv';
+dotenv.config();
 
 const app = express();
 
@@ -336,15 +339,31 @@ app.use((req, res, next) => {
   // Backend-only setup - no frontend serving needed
   // This is a pure API server for AWS EC2 deployment
 
-  // Backend API server runs on configurable port
-  // Default to 5000 for development, 8080 for production
-  const port = parseInt(process.env.PORT || '5000', 10);
+  // Configure port for different environments
+  // Development: 5000, Production: 8080 (or PORT env var)
+  const port = parseInt(process.env.PORT || (process.env.NODE_ENV === 'production' ? '8080' : '5000'), 10);
   
-  server.listen(port, "0.0.0.0", () => {
-    log(`Server running at http://0.0.0.0:${port}`);
-    log(`Preview should be available externally`);
+  // Configure host binding
+  // Development: 0.0.0.0 (allows external access in Replit)
+  // Production: 0.0.0.0 (allows access from load balancer/reverse proxy)
+  const host = "0.0.0.0";
+  
+  server.listen(port, host, async () => {
+    log(`Server running at http://${host}:${port}`);
+    log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    
+    if (process.env.NODE_ENV === 'production') {
+      log(`Production server ready for EC2 deployment`);
+      log(`Accessible via load balancer or public IP on port ${port}`);
+    } else {
+      log(`Development server - Preview should be available externally`);
+    }
+    
     log(`Cache system: ACTIVE with multi-layer architecture`);
     log(`Health monitoring: Available at /api/cache/health`);
+    
+    // Test database connection
+    await testDatabaseConnection();
     
     // Mark server as ready after startup
     setTimeout(() => {

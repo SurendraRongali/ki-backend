@@ -59,6 +59,8 @@ import { eq, desc, and, sql, like, or, gte, lte, gt, lt, inArray, ne, count, not
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { invalidateCache } from "./cache";
+import dotenv from 'dotenv';
+dotenv.config();
 
 export interface IStorage {
   sessionStore: session.Store;

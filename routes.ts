@@ -20,6 +20,8 @@ import {
 import { generateMagicLink, validateMagicLink } from "./magic-link-auth";
 import { scrypt, randomBytes, pbkdf2Sync } from "crypto";
 import { promisify } from "util";
+import dotenv from 'dotenv';
+dotenv.config();
 
 const scryptAsync = promisify(scrypt);
 
@@ -118,9 +120,9 @@ const validateAndInitializeStripe = () => {
 // Validate price IDs at startup
 const validatePriceIds = () => {
   const priceIds = {
-    monthly: process.env.STRIPE_PRICE_ID_MONTHLY,
-    annual: process.env.STRIPE_PRICE_ID_ANNUAL,
-    student: process.env.STRIPE_PRICE_ID_STUDENT
+    monthly: process.env.STRIPE_MONTHLY_PRICE_ID,
+    annual: process.env.STRIPE_ANNUAL_PRICE_ID,
+    student: process.env.STRIPE_STUDENT_PRICE_ID
   };
   
   let allValid = true;
@@ -1808,13 +1810,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let priceId;
       switch (plan) {
         case 'student':
-          priceId = process.env.STRIPE_PRICE_ID_STUDENT;
+          priceId = process.env.STRIPE_STUDENT_PRICE_ID;
           break;
         case 'monthly':
-          priceId = process.env.STRIPE_PRICE_ID_MONTHLY;
+          priceId = process.env.STRIPE_MONTHLY_PRICE_ID;
           break;
         case 'annual':
-          priceId = process.env.STRIPE_PRICE_ID_ANNUAL;
+          priceId = process.env.STRIPE_ANNUAL_PRICE_ID;
           break;
         default:
           return res.status(400).json({ error: 'Invalid plan' });
@@ -2226,13 +2228,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let amount = 0;
       
       if (isStudent) {
-        priceId = process.env.STRIPE_PRICE_ID_STUDENT || '';
+        priceId = process.env.STRIPE_STUDENT_PRICE_ID || '';
         amount = plan === 'monthly' ? 999 : 9988; // £9.99/month, £99.88/year
       } else if (plan === 'monthly') {
-        priceId = process.env.STRIPE_PRICE_ID_MONTHLY || '';
+        priceId = process.env.STRIPE_MONTHLY_PRICE_ID || '';
         amount = 1499; // £14.99/month
       } else if (plan === 'annual') {
-        priceId = process.env.STRIPE_PRICE_ID_ANNUAL || '';
+        priceId = process.env.STRIPE_ANNUAL_PRICE_ID || '';
         amount = 11988; // £119.88/year
       }
 
@@ -3565,15 +3567,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Map plan IDs to Stripe price IDs from environment variables
       const priceMap = {
-        'student': process.env.STRIPE_PRICE_ID_STUDENT,
-        'monthly': process.env.STRIPE_PRICE_ID_MONTHLY,
-        'annual': process.env.STRIPE_PRICE_ID_ANNUAL
+        'student': process.env.STRIPE_STUDENT_PRICE_ID,
+        'monthly': process.env.STRIPE_MONTHLY_PRICE_ID,
+        'annual': process.env.STRIPE_ANNUAL_PRICE_ID
       };
 
       console.log('Available price IDs:', {
-        student: process.env.STRIPE_PRICE_ID_STUDENT ? 'SET' : 'MISSING',
-        monthly: process.env.STRIPE_PRICE_ID_MONTHLY ? 'SET' : 'MISSING',
-        annual: process.env.STRIPE_PRICE_ID_ANNUAL ? 'SET' : 'MISSING'
+        student: process.env.STRIPE_STUDENT_PRICE_ID ? 'SET' : 'MISSING',
+        monthly: process.env.STRIPE_MONTHLY_PRICE_ID ? 'SET' : 'MISSING',
+        annual: process.env.STRIPE_ANNUAL_PRICE_ID ? 'SET' : 'MISSING'
       });
 
       const priceId = priceMap[planId as keyof typeof priceMap];
@@ -3935,11 +3937,11 @@ If you didn't request this verification, please ignore this email.
       // Determine price ID based on plan
       let priceId;
       if (plan === 'student') {
-        priceId = process.env.STRIPE_PRICE_ID_STUDENT;
+        priceId = process.env.STRIPE_STUDENT_PRICE_ID;
       } else if (plan === 'monthly') {
-        priceId = process.env.STRIPE_PRICE_ID_MONTHLY;
+        priceId = process.env.STRIPE_MONTHLY_PRICE_ID;
       } else if (plan === 'annual') {
-        priceId = process.env.STRIPE_PRICE_ID_ANNUAL;
+        priceId = process.env.STRIPE_ANNUAL_PRICE_ID;
       } else {
         return res.status(400).json({ error: 'Invalid plan' });
       }
@@ -4045,11 +4047,11 @@ If you didn't request this verification, please ignore this email.
       // Determine price ID based on plan
       let priceId;
       if (plan === 'student') {
-        priceId = process.env.STRIPE_PRICE_ID_STUDENT;
+        priceId = process.env.STRIPE_STUDENT_PRICE_ID;
       } else if (plan === 'monthly') {
-        priceId = process.env.STRIPE_PRICE_ID_MONTHLY;
+        priceId = process.env.STRIPE_MONTHLY_PRICE_ID;
       } else if (plan === 'annual') {
-        priceId = process.env.STRIPE_PRICE_ID_ANNUAL;
+        priceId = process.env.STRIPE_ANNUAL_PRICE_ID;
       } else {
         return res.status(400).json({ error: 'Invalid plan' });
       }

@@ -1,324 +1,141 @@
-# AWS EC2 Backend Deployment with Amazon RDS PostgreSQL
-
-## Overview
-This is a clean, production-ready Node.js backend for the Krugman Insights application, designed for deployment on AWS EC2 with Amazon RDS PostgreSQL.
-
-## Architecture
-- **Backend**: Node.js + Express + TypeScript
-- **Database**: Amazon RDS PostgreSQL
-- **ORM**: Drizzle ORM
-- **Authentication**: Passport.js (Local + Google OAuth)
-- **Security**: Helmet, CORS, Rate limiting
-- **Session Store**: PostgreSQL sessions
-
-## Prerequisites
-
-### AWS Setup
-1. AWS account with EC2 and RDS access
-2. EC2 instance (t3.medium or larger recommended)
-3. Amazon RDS PostgreSQL instance
-4. Security groups configured for HTTP/HTTPS traffic
-
-### Local Requirements
-- Node.js 18+
-- npm or yarn
-- Git
-
-## Backend Directory Structure
-
-```
-backend/
-├── src/
-│   ├── schema/
-│   │   └── index.ts          # Database schema
-│   ├── routes/
-│   │   └── index.ts          # API routes
-│   ├── auth/
-│   │   └── index.ts          # Authentication
-│   └── index.ts              # Main server file
-├── package.json
-├── tsconfig.json
-├── drizzle.config.ts
-├── .env.example
-└── AWS_EC2_DEPLOYMENT.md
-```
-
-## Database Setup (Amazon RDS)
-
-### 1. Create RDS PostgreSQL Instance
-```bash
-# Via AWS Console or CLI
-aws rds create-db-instance \
-  --db-instance-identifier krugman-insights-db \
-  --db-instance-class db.t3.micro \
-  --engine postgres \
-  --master-username postgres \
-  --master-user-password YOUR_SECURE_PASSWORD \
-  --allocated-storage 20 \
-  --vpc-security-group-ids sg-xxxxxxxxx
-```
-
-### 2. Security Group Configuration
-- Allow inbound connections on port 5432 from your EC2 instance
-- Allow outbound connections from EC2 to RDS
-
-### 3. Database Connection String
-```
-postgresql://postgres:password@your-rds-endpoint.amazonaws.com:5432/postgres
-```
-
-## EC2 Instance Setup
-
-### 1. Launch EC2 Instance
-- Instance type: t3.medium (minimum)
-- OS: Ubuntu 22.04 LTS
-- Security group: Allow HTTP (80), HTTPS (443), SSH (22)
-
-### 2. Connect to Instance
-```bash
-ssh -i your-key.pem ubuntu@your-ec2-ip
-```
-
-### 3. Install Dependencies
-```bash
-# Update system
-sudo apt update && sudo apt upgrade -y
-
-# Install Node.js 18
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt-get install -y nodejs
-
-# Install PM2 for process management
-sudo npm install -g pm2
-
-# Install Nginx for reverse proxy
-sudo apt install nginx -y
-```
-
-## Backend Deployment
-
-### 1. Clone and Setup
-```bash
-# Clone your repository
-git clone your-repo-url
-cd backend
-
-# Install dependencies
-npm install
-
-# Copy environment file
-cp .env.example .env
-```
-
-### 2. Environment Configuration
-```bash
-# Edit .env file
-nano .env
-```
-
-Required environment variables:
-```bash
-DATABASE_URL=postgresql://postgres:password@your-rds-endpoint.amazonaws.com:5432/postgres
-PORT=3000
-NODE_ENV=production
-SESSION_SECRET=your-32-character-secret
-FRONTEND_URL=https://your-frontend-domain.com
-```
-
-Optional (for full functionality):
-```bash
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-SENDGRID_API_KEY=your_sendgrid_api_key
-STRIPE_SECRET_KEY=sk_live_your_stripe_key
-```
-
-### 3. Database Migration
-```bash
-# Push schema to database
-npm run db:push
-
-# Verify connection
-npm run db:studio
-```
-
-### 4. Build and Start
-```bash
-# Build TypeScript
-npm run build
-
-# Start with PM2
-pm2 start dist/index.js --name krugman-backend
-
-# Save PM2 configuration
-pm2 save
-pm2 startup
-```
-
-## Nginx Configuration
-
-### 1. Create Nginx Config
-```bash
-sudo nano /etc/nginx/sites-available/krugman-backend
-```
-
-```nginx
+AWS EC2 Deployment Configuration
+Server Configuration
+Port Binding
+Development: 0.0.0.0:5000 (Replit environment)
+Production: 0.0.0.0:8080 (AWS EC2 default)
+Custom Port: Use PORT environment variable to override
+Public Access on EC2
+Option 1: Direct Public IP Access
+# Your API will be accessible at:
+http://YOUR_EC2_PUBLIC_IP:8080
+# Example:
+http://52.91.123.456:8080/api/health
+Option 2: Load Balancer (Recommended)
+# Application Load Balancer forwards to EC2 instances
+http://your-alb-dns-name.us-east-1.elb.amazonaws.com/api/health
+# Custom domain with ALB
+https://api.yourdomain.com/api/health
+Option 3: Reverse Proxy (Nginx)
+# Nginx configuration on EC2
 server {
     listen 80;
-    server_name your-api-domain.com;  # Replace with your domain
-
+    server_name your-domain.com;
+    
     location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
+        proxy_pass http://localhost:8080;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
     }
 }
-```
-
-### 2. Enable Site
-```bash
-sudo ln -s /etc/nginx/sites-available/krugman-backend /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
-```
-
-### 3. SSL Certificate (Let's Encrypt)
-```bash
-sudo apt install certbot python3-certbot-nginx -y
-sudo certbot --nginx -d your-api-domain.com
-```
-
-## API Endpoints
-
-The backend provides the following endpoints:
-
-### Public Endpoints
-- `GET /health` - Health check
-- `GET /api/articles` - Get published articles
-- `GET /api/articles/:id` - Get article by ID
-- `GET /api/articles/slug/:slug` - Get article by slug
-- `GET /api/featured` - Get featured article
-- `GET /api/trending-now` - Get trending articles
-- `GET /api/categories` - Get categories
-- `GET /api/search?q=term` - Search articles
-- `POST /api/newsletter/subscribe` - Newsletter subscription
-- `POST /api/contact` - Contact form
-
-### Authentication Endpoints
-- `POST /auth/login` - User login
-- `POST /auth/register` - User registration
-- `GET /auth/google` - Google OAuth
-- `POST /auth/logout` - User logout
-- `GET /auth/status` - Authentication status
-
-## Monitoring and Logs
-
-### PM2 Monitoring
-```bash
-# View processes
-pm2 list
-
-# View logs
-pm2 logs krugman-backend
-
-# Restart application
-pm2 restart krugman-backend
-
-# Monitor resources
-pm2 monit
-```
-
-### Nginx Logs
-```bash
-# Access logs
-sudo tail -f /var/log/nginx/access.log
-
-# Error logs
-sudo tail -f /var/log/nginx/error.log
-```
-
-## Database Management
-
-### Backup
-```bash
-# Create backup
-pg_dump $DATABASE_URL > backup_$(date +%Y%m%d_%H%M%S).sql
-
-# Restore backup
-psql $DATABASE_URL < backup_file.sql
-```
-
-### Schema Updates
-```bash
-# After schema changes
-npm run db:push
-
-# Generate migrations (if needed)
-npm run db:migrate
-```
-
-## Security Considerations
-
-1. **Environment Variables**: Never commit .env files
-2. **Database**: Use strong passwords and enable SSL
-3. **API Keys**: Store securely and rotate regularly
-4. **HTTPS**: Always use SSL certificates in production
-5. **Rate Limiting**: Configured for 1000 requests per 15 minutes
-6. **CORS**: Configured to allow only your frontend domain
-
-## Performance Optimization
-
-1. **Database**: Enable connection pooling
-2. **Caching**: Redis can be added for session caching
-3. **CDN**: Use CloudFront for static assets
-4. **Monitoring**: Set up CloudWatch for metrics
-5. **Auto Scaling**: Configure Auto Scaling groups
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Database Connection Failed**
-   - Verify RDS security groups
-   - Check DATABASE_URL format
-   - Ensure RDS instance is running
-
-2. **502 Bad Gateway**
-   - Check if Node.js process is running
-   - Verify PM2 status
-   - Check Nginx configuration
-
-3. **CORS Errors**
-   - Verify FRONTEND_URL in .env
-   - Check Nginx proxy headers
-
-### Debug Commands
-```bash
-# Check application status
+Security Groups Configuration
+Inbound Rules Required
+Type: HTTP
+Protocol: TCP
+Port: 8080
+Source: 0.0.0.0/0 (or specific IP ranges)
+Type: HTTPS  
+Protocol: TCP
+Port: 443
+Source: 0.0.0.0/0 (if using SSL)
+Type: SSH
+Protocol: TCP
+Port: 22
+Source: Your IP address
+Environment Variables for EC2
+# Required environment variables
+export NODE_ENV=production
+export PORT=8080
+export DATABASE_URL=postgresql://username:password@rds-endpoint:5432/dbname
+export STRIPE_SECRET_KEY=sk_live_...
+export VITE_STRIPE_PUBLIC_KEY=pk_live_...
+export SESSION_SECRET=your-session-secret
+# Optional
+export AWS_REGION=us-east-1
+export S3_BUCKET=your-bucket-name
+Deployment Commands
+1. Build and Start
+npm run build
+npm run production:start
+2. PM2 Process Manager (Recommended)
+# Install PM2
+npm install -g pm2
+# Start with PM2
+pm2 start ecosystem.config.js
+# Monitor
 pm2 status
+pm2 logs
+3. Systemd Service
+# Create service file
+sudo nano /etc/systemd/system/krugman-api.service
+# Service configuration:
+[Unit]
+Description=Krugman Insights API
+After=network.target
+[Service]
+Type=simple
+User=ec2-user
+WorkingDirectory=/home/ec2-user/backend
+ExecStart=/usr/bin/node dist/index.js
+Restart=on-failure
+Environment=NODE_ENV=production
+Environment=PORT=8080
+[Install]
+WantedBy=multi-user.target
+Health Check Endpoints
+The server provides health check endpoints for load balancers:
 
-# View application logs
-pm2 logs krugman-backend --lines 100
+# Basic health check
+GET /api/health
+# Database health check  
+GET /api/cache/health
+# Detailed system status
+GET /api/status
+SSL/HTTPS Configuration
+Option 1: ALB with SSL Certificate
+Configure SSL certificate in Application Load Balancer
+ALB handles SSL termination
+Backend runs HTTP on port 8080
+Option 2: Direct SSL (Nginx + Let's Encrypt)
+# Install Certbot
+sudo yum install certbot python3-certbot-nginx
+# Get SSL certificate
+sudo certbot --nginx -d yourdomain.com
+# Auto-renewal
+sudo crontab -e
+0 12 * * * /usr/bin/certbot renew --quiet
+Public IP Access Flow
+Internet → EC2 Public IP:8080 → Your API Server
+Internet → Load Balancer → EC2 Private IP:8080 → Your API Server
+Internet → CloudFront → Load Balancer → EC2:8080 → Your API Server
+Frontend Connection
+Your frontend will connect to the backend using:
 
-# Test database connection
-npm run db:studio
-
-# Check Nginx configuration
-sudo nginx -t
-```
-
-## Cost Estimation
-
-**Monthly AWS Costs:**
-- EC2 t3.medium: ~$30-40
-- RDS db.t3.micro: ~$15-20
-- Data transfer: ~$5-10
-- **Total: ~$50-70/month**
-
-This clean backend is production-ready and includes all essential features for the Krugman Insights application without the complexity of frontend dependencies or Vite configurations.
+// Production API base URL
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://api.yourdomain.com';
+// API calls
+fetch(`${API_BASE_URL}/api/articles`)
+Example EC2 Setup Script
+#!/bin/bash
+# EC2 setup script
+# Update system
+sudo yum update -y
+# Install Node.js
+curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
+sudo yum install -y nodejs
+# Install PM2
+npm install -g pm2
+# Clone and setup application
+git clone https://github.com/yourusername/krugman-backend.git
+cd krugman-backend/backend
+npm install
+npm run build
+# Set environment variables
+export NODE_ENV=production
+export PORT=8080
+# Start with PM2
+pm2 start ecosystem.config.js
+pm2 startup
+pm2 save
+# Configure firewall (if needed)
+sudo ufw allow 8080
+sudo ufw enable
